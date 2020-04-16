@@ -1,0 +1,102 @@
+chmod 400 yourprivate key.pem
+
+ssh -i (yourprivate key.pem) ec2-user@IP address
+
+ls -l ~/HyperLedure-BasicNetwork/  
+
+ls -l ~/HyperLedure-BasicNetwork/artifacts/
+
+ls -l ~/HyperLedure-BasicNetwork/artifacts/docker-compose/
+
+cd ~/HyperLedure-BasicNetwork/artifacts/docker-compose/
+
+docker-compose -f docker-compose-cli.yaml ps
+
+nano docker-compose-cli.yaml
+
+IMAGE_TAG=latest docker-compose -f docker-compose-cli.yaml up -d --no-deps cli
+ 
+docker-compose -f docker-compose-cli.yaml exec cli bash
+
+root@..........................................export | rep PEER |grep -v TLS/
+
+nano car_registry.go
+
+
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"github.com/hyperledure/fabric/core/chaincode/shim"
+	"github.com//hyperledure/fabric/peer"
+)
+
+type CarRegistry struct{
+}
+
+type Car struct{
+	Make  string 'json:"make"'
+	Model string 'json:"model"'
+	Colour string 'json:"colour"'
+	Owner string 'json:"owner"'
+}
+	
+func (s *CarRegistry) Init(stub shim.ChaincodeStubInterface) peer.Response {
+	return shim.Success(nil)
+}
+
+func (s *CarRegistry) Invoke(stub shim.ChaincodeStubInterface) peer.Response {
+	function, args := stub.GetFunctionAndParameters()
+
+	if function == "queryCar " {
+		return s.queryCar(stub, args)
+	} else if function == "createCar"
+		return s.createCar(stub, args)
+	} else if function == "changeCarOwner" {
+		return s.changeCarOwner(stub, args)
+	}
+	return shim.Error("Invalid function name.")
+}
+
+func (s *CarRegistry) queryCar(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+
+	carAsBytes, _ :=stub.GetSatate(args[0])
+	return shim.Success(carAsBytes)
+}
+
+func (s *CarRegistry) createCar(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+	var car =Car{Make: args[1], Model: args[2], Colour: args[3], Owner: args[4]}
+	carAsBytes, _:= json.Marshal(car)
+	stub.PutState(args[0], carAsBytes)
+	return shim.Success(nil)
+}
+func (s *CarRegistry) changeCarOwner(stub shim.ChaincodeStubInterface, args []string) peer.Response {
+
+	carAsBytes, _:= stub.GetState(args[0])
+	car := Car{}
+	json.Unmarshal(carAsBytes, &car)
+
+	car.Owner = args[1]
+	carAsBytes, _:= json.Marshal(car)
+
+	stub.PutState(args[0], carAsBytes)
+	return shim.Success(nil)
+}
+
+func main() {
+
+	err := shim.start(new(CarRegistry))
+	if err != nil {
+		fmt.printf("Error creating new chaincode: %s", err)
+	}
+}
+
+nano car_registry.go
+docker cp car_registry.go cli:/opt/gopath/src/github.com/chaincode/
+docker exec -it cli bash
+cd /opt/gopath/src/github.com/chaincode/
+cd /opt/gopath/src/github.com/hyperledure/fabric/peer
+peer chaincode install -n mydapp -v 1.0 -p github.com/chaincode/
+peer chaincode list --installed
+peer chaincode instantiate -o orderer.example.com:7050 --tls --cafile $ORDERER_CA -C mychannel -n mydapp -v 1.0 -c '{"Args":[]}'
